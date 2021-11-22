@@ -50,7 +50,7 @@ def post_fact(fact: Fact, settings: Settings = Depends(get_settings)):
     if fact_with_same_id is not None:
         raise HTTPException(status_code=400, detail="fact ID occupied")
 
-    facts_collection.insert_one(dict(fact))
+    facts_collection.insert_one(fact.dict())
 
 
 @app.get("/facts/{fact_id}", response_model=Fact, tags=["resource:facts"])
@@ -77,7 +77,7 @@ def patch_fact(
 ):
     new_fact_dict = {}
     if name is not None:
-        new_fact_dict["description"] = name
+        new_fact_dict["name"] = name
     if description is not None:
         new_fact_dict["description"] = description
     if lat is not None:
@@ -102,7 +102,8 @@ def patch_fact(
         )
     if result.modified_count != 1:
         raise HTTPException(status_code=409, detail="No new parameters were supplied")
-    return Fact(**result.raw_result)
+    new_fact = facts_collection.find_one({"fact_id": fact_id})
+    return Fact(**new_fact)
 
 
 @app.put("/facts/{fact_id}", response_model=Fact, tags=["resource:facts"])
@@ -113,23 +114,23 @@ def put_fact(
 
     result = facts_collection.replace_one(
         {"fact_id": fact_id},
-        {"fact_id": fact_id, "name": fact.name, "description": fact.description, "pos": fact.pos},
+        {"fact_id": fact_id, "name": fact.name, "description": fact.description, "pos": fact.pos.dict()},
     )
 
     if result.matched_count != 1:
         raise HTTPException(
             status_code=404, detail="Fact with specified ID was not found"
         )
-    return Fact(**result.raw_result)
+    return {"fact_id": fact_id, "name": fact.name, "description": fact.description, "pos": fact.pos.dict()}
 
 
 @app.delete("/fact/{fact_id}", tags=["resource:facts"])
 def delete_fact(fact_id: str, settings: Settings = Depends(get_settings)):
     facts_collection = get_facts_collection(settings.mongo_url)
 
-    deleted_count = facts_collection.delete_one({"fact_id": fact_id})
+    res = facts_collection.delete_one({"fact_id": fact_id})
 
-    if deleted_count != 1:
+    if res.deleted_count != 1:
         raise HTTPException(
             status_code=404, detail="Fact with specified id was not found"
         )

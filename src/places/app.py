@@ -56,7 +56,7 @@ def post_place(place: Place, settings: Settings = Depends(get_settings)):
     if place_with_same_id is not None:
         raise HTTPException(status_code=400, detail="place ID occupied")
 
-    place_collection.insert_one(dict(place))
+    place_collection.insert_one(place.dict())
 
 
 @app.get("/places/{place_id}", response_model=Place, tags=["resource:places"])
@@ -76,8 +76,8 @@ def get_places_by_id(place_id: str, settings: Settings = Depends(get_settings)):
 def patch_place(
     place_id: str,
     name: Optional[str] = None,
-    lat: Optional[str] = None,
-    lng: Optional[str] = None,
+    lat: Optional[float] = None,
+    lng: Optional[float] = None,
     settings: Settings = Depends(get_settings),
 ):
     places_collection = get_places_collection(settings.mongo_url)
@@ -105,7 +105,8 @@ def patch_place(
         raise HTTPException(
             status_code=404, detail="Place with specified ID was not found"
         )
-    return Place(**res.raw_result)
+    new_place = places_collection.find_one({"place_id": place_id})
+    return Place(**new_place)
 
 
 @app.put("/places/{place_id}", response_model=Place, tags=["resource:places"])
@@ -114,13 +115,14 @@ def put_place(
 ):
     places_collection = get_places_collection(settings.mongo_url)
 
-    res = places_collection.update_one({"place_id": place_id}, {"$set": dict(place)})
+    res = places_collection.update_one({"place_id": place_id}, {"$set": place.dict()})
 
     if not res.matched_count:
         raise HTTPException(
             status_code=404, detail="Place with specified ID was not found"
         )
-    return Place(**res.raw_result)
+    new_place = places_collection.find_one({"place_id": place_id})
+    return Place(**new_place)
 
 
 @app.delete("/places/{place_id}", tags=["resource:places"])
