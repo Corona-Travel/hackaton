@@ -7,7 +7,7 @@ from logging import getLogger
 from fastapi import FastAPI, Depends, HTTPException, status
 import httpx
 
-from .types import Marker, Markers, Position
+from .types import Marker3D, Markers3D, Position
 from .settings import Settings, get_settings
 
 app = FastAPI(openapi_tags=[{"name": "service:map3D"}])
@@ -43,8 +43,8 @@ def type_obj2id(obj_type: str, obj: Any) -> str:
 
 def get_url_factory(
     position: Position, distance: float
-) -> Callable[[tuple[str, str]], Awaitable[Markers]]:
-    async def get_url(url_type_and_string: tuple[str, str]) -> Markers:
+) -> Callable[[tuple[str, str]], Awaitable[Markers3D]]:
+    async def get_url(url_type_and_string: tuple[str, str]) -> Markers3D:
         url_type, url = url_type_and_string
 
         async with httpx.AsyncClient() as client:
@@ -55,10 +55,12 @@ def get_url_factory(
 
         objs = loads(response.text)
 
-        correct_objects = [o for o in objs if check_pos(Position(**o["pos"]), position, distance)]
+        correct_objects = [
+            o for o in objs if check_pos(Position(**o["pos"]), position, distance)
+        ]
 
         res = [
-            Marker(
+            Marker3D(
                 type=url_type,
                 name=o["name"],
                 marker_id=type_obj2id(url_type, o),
@@ -71,7 +73,7 @@ def get_url_factory(
     return get_url
 
 
-@app.get("/map/3D/{lat}/{lng}", response_model=Markers, tags=["service:map3D"])
+@app.get("/map/3D/{lat}/{lng}", response_model=Markers3D, tags=["service:map3D"])
 async def map3D(
     lat: float,
     lng: float,
@@ -95,11 +97,11 @@ async def map3D(
         list of markers for 3D map
     """
     type2url: dict[str, str] = {
-        "fact": f"http://{settings.facts_url}/facts",
+        "fact": f"{settings.facts_url}/facts",
     }
     cur_position = Position(lat=lat, lng=lng)
 
-    markers: Markers = [
+    markers: Markers3D = [
         marker
         for markers in await asyncio.gather(
             *map(get_url_factory(cur_position, distance), type2url.items())

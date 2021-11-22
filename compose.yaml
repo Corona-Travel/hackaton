@@ -15,6 +15,10 @@ services:
       - map_3d
     environment:
       ASGI_APP: "main.app:app"
+      FACTS_URL: http://facts:1234
+      PLACES_URL: http://places:1234
+      MAP_2D_URL: http://map_2d:1234
+      MAP_3D_URL: http://map_3d:1234
     volumes:
       - "$PWD/src/hackaton/:/corona_travel/main"
     ports:
@@ -64,7 +68,7 @@ services:
       places:
         condition: service_started
     environment:
-      PLACES_URL: places:1234
+      PLACES_URL: http://places:1234
       ASGI_APP: "map_2D.app:app"
     volumes:
       - "$PWD/src/map_2D/:/corona_travel/map_2D"
@@ -81,7 +85,7 @@ services:
       places:
         condition: service_started
     environment:
-      FACTS_URL: facts:1234
+      FACTS_URL: http://facts:1234
       ASGI_APP: "map_3D.app:app"
     volumes:
       - "$PWD/src/map_3D/:/corona_travel/map_3D"

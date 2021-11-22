@@ -1,11 +1,13 @@
-from fastapi import FastAPI, HTTPException, Depends
-from fastapi.openapi.utils import get_openapi
-from reusable_mongodb_connection import get_db
-import httpx
 from json import loads
 
 from .settings import Settings, get_settings
 from .__version__ import __version__
+
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.openapi.utils import get_openapi
+import httpx
+from reusable_mongodb_connection import get_db
+from mergedeep import merge
 
 app = FastAPI(version=__version__, openapi_tags=[{"name": "root"}])
 
@@ -20,10 +22,16 @@ async def test(settings: Settings = Depends(get_settings)):
     return {
         "name": settings.app_name,
         "can connect to microservice `places`": await check_service(
-            "http://places:1234/openapi.json"
+            f"{settings.places_url}/openapi.json"
         ),
         "can connect to microservice `facts`": await check_service(
-            "http://facts:1234/openapi.json"
+            f"{settings.facts_url}/openapi.json"
+        ),
+        "can connect to microservice `map_2D`": await check_service(
+            f"{settings.map_2d_url}/openapi.json"
+        ),
+        "can connect to microservice `map_3D`": await check_service(
+            f"{settings.map_3d_url}/openapi.json"
         ),
     }
 
@@ -40,23 +48,31 @@ def custom_openapi():
         tags=app.openapi_tags,
     )
 
-    places_openapi_schema = loads(httpx.get("http://places:1234/openapi.json").text)
-    places_openapi_schema = loads(httpx.get(f"http://{settings.place_url}/place").text)
-    facts_openapi_schema = loads(httpx.get("http://facts:1234/openapi.json").text)
+    settings = get_settings()
+
+    service2url = {
+        "places": settings.places_url,
+        "facts":  settings.facts_url,
+        "map_2d": settings.map_2d_url,
+        "map_3d": settings.map_3d_url,
+    }
+    service2openapi_schema = {k: loads(httpx.get(f"{v}/openapi.json").text) for k, v in service2url.items()}
 
     for dict_key in {"paths", "components"}:
-        root_openapi_schema[dict_key] = (
-            root_openapi_schema.get(dict_key, {})
-            | places_openapi_schema.get(dict_key, {})
-            | facts_openapi_schema.get(dict_key, {})
-        )
+        new_value = root_openapi_schema.get(dict_key, {})
+        for v in service2openapi_schema.values():
+            if dict_key in v:
+                # maybe replace with iterative merge
+                merge(new_value, v[dict_key])
+        root_openapi_schema[dict_key] = new_value
 
     for list_key in {"tags"}:
-        root_openapi_schema[dict_key] = (
-            root_openapi_schema.get(list_key, [])
-            + places_openapi_schema.get(list_key, [])
-            + facts_openapi_schema.get(list_key, [])
-        )
+        new_value = root_openapi_schema.get(list_key, [])
+        for v in service2openapi_schema.values():
+            if list_key in v:
+                new_value += v[list_key]
+        root_openapi_schema[list_key] = new_value
+
 
     # openapi_schema["info"]["x-logo"] = {
     #     "url": ""

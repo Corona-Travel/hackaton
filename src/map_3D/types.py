@@ -9,15 +9,15 @@ class Position(BaseModel):
     lng: float
 
 
-class MarkerType(str, Enum):
+class Marker3DType(str, Enum):
     fact = "fact"
 
 
-class Marker(BaseModel):
+class Marker3D(BaseModel):
     name: str
     marker_id: str
-    type: MarkerType
+    type: Marker3DType
     pos: Position
 
 
-Markers = List[Marker]
+Markers3D = List[Marker3D]

@@ -7,10 +7,10 @@ class Position(BaseModel):
     lng: float
 
 
-class Marker(BaseModel):
+class Marker2D(BaseModel):
     name: str
     place_id: str
     pos: Position
 
 
-Markers = List[Marker]
+Markers2D = List[Marker2D]
