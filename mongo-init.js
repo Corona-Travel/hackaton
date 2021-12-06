@@ -22,3 +22,4 @@ db.facts.insert({ name: "Belarusian National Arts Museum", description: "The Nat
 db.facts.insert({ name: "The Grand-Place", description: "The Grand-Place is the central square of the City of Brussels", fact_id: "gr_pal", pos: [50.8467, 4.3525] })
 db.facts.insert({ name: "Sofia History Museum", description: "The Sofia History Museum is housed in the former building of the Central Mineral Baths and is devoted to ethnography, archaeology, economy, and cultural life in Sofia and its region", fact_id: "shm", pos: [42.699368, 23.323177] })
 
+db.quizzes.insert({quiz_id: "1", name: "Moscow center", questions_with_answer: [{task: "When Red Square was build?", answers: [{option: "12th century", correct: false}, {option: "16th century", correct: true}, {option: "18th century", correct: false}, {option: "20th century", correct: true}]}]})
