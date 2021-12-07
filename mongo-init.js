@@ -9,6 +9,7 @@ db.places.insert({ name: "Baku", place_id: "bak", pos: [40.3905, 49.86683] })
 db.places.insert({ name: "Vienna", place_id: "vien", pos: [48.184517, 16.311865] })
 db.places.insert({ name: "Buenos Aires", place_id: "buen", pos: [34.603625,-58.369523] })
 db.places.insert({ name: "Minsk", place_id: "minsk", pos: [50.8467, 4.3525] })
+db.facts.insert({ name: "Brussel", place_id: "brussel", pos: [50.8467, 4.3525] })
 db.places.insert({ name: "Sofia", place_id: "sofia", pos: [42.699368, 23.323177] })
 
 db.facts.insert({ name: "Req Square", description: "Red Square was built in 16-th century", fact_id: "moscow_red_sqr", pos: [55.749792, 37.632495] })
